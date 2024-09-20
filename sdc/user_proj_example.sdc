@@ -1,6 +1,6 @@
 ###############################################################################
 # Created by write_sdc
-# Wed Jul 19 15:17:31 2023
+# Fri Sep 20 02:47:36 2024
 ###############################################################################
 current_design user_proj_example
 ###############################################################################
@@ -1001,6 +1001,20 @@ set_multicycle_path -setup\
 # Environment
 ###############################################################################
 set_load -pin_load 0.1900 [get_ports {wbs_ack_o}]
+set_load -pin_load 0.1900 [get_ports {digit0_oeb[6]}]
+set_load -pin_load 0.1900 [get_ports {digit0_oeb[5]}]
+set_load -pin_load 0.1900 [get_ports {digit0_oeb[4]}]
+set_load -pin_load 0.1900 [get_ports {digit0_oeb[3]}]
+set_load -pin_load 0.1900 [get_ports {digit0_oeb[2]}]
+set_load -pin_load 0.1900 [get_ports {digit0_oeb[1]}]
+set_load -pin_load 0.1900 [get_ports {digit0_oeb[0]}]
+set_load -pin_load 0.1900 [get_ports {digit0_out[6]}]
+set_load -pin_load 0.1900 [get_ports {digit0_out[5]}]
+set_load -pin_load 0.1900 [get_ports {digit0_out[4]}]
+set_load -pin_load 0.1900 [get_ports {digit0_out[3]}]
+set_load -pin_load 0.1900 [get_ports {digit0_out[2]}]
+set_load -pin_load 0.1900 [get_ports {digit0_out[1]}]
+set_load -pin_load 0.1900 [get_ports {digit0_out[0]}]
 set_load -pin_load 0.1900 [get_ports {io_oeb[15]}]
 set_load -pin_load 0.1900 [get_ports {io_oeb[14]}]
 set_load -pin_load 0.1900 [get_ports {io_oeb[13]}]
