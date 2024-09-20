@@ -45,7 +45,7 @@ module user_proj_example #(
 
     // Wishbone Slave ports (WB MI A)
     input wb_clk_i,
-    input wb_rst_i,             // Core (Wishbone) reset signal (active high).
+    input wb_rst_i,
     input wbs_stb_i,
     input wbs_cyc_i,
     input wbs_we_i,
@@ -61,11 +61,11 @@ module user_proj_example #(
     input  [127:0] la_oenb,
 
     // IOs
-    input  [BITS-1:0] io_in,    // Unused in this design.
-    output [BITS-1:0] io_out,   // Counter binary output.
-    output [BITS-1:0] io_oeb,   // Output enables (active low).
-    output [6:0] digit0_out,    // Counter lowest nibble as a 7-seg hex digit.
-    output [6:0] digit0_oeb,    // Output enables (active low).
+    input  [BITS-1:0] io_in,
+    output [BITS-1:0] count_out,
+    output [BITS-1:0] count_oeb,
+    output [6:0] digit0_out,    // Lowest hex digit of counter, 7-seg coding
+    output [6:0] digit0_oeb,    // Output enables for lowest hex digit
 
     // IRQ
     output [2:0] irq
@@ -88,19 +88,12 @@ module user_proj_example #(
     assign wdata = wbs_dat_i[BITS-1:0];
 
     // IO
-    assign io_out = count;
-    // Disable these outputs while we're in reset:
-    assign io_oeb = {(BITS){rst}};
+    assign count_out = count;
+    assign count_oeb = {(BITS){rst}};
     assign digit0_oeb = {7{rst}};
 
-    // Convert lower nibble of count to a 7-segment hex digit output:
-    decode_7seg_hex digit0(
-        .value(count[3:0]),
-        .segments(digit0_out)
-    );
-
     // IRQ
-    assign irq = 3'b000;	// Unused in this design.
+    assign irq = 3'b000;	// Unused
 
     // LA
     assign la_data_out = {{(128-BITS){1'b0}}, count};
@@ -123,6 +116,11 @@ module user_proj_example #(
         .la_write(la_write),
         .la_input(la_data_in[63:64-BITS]),
         .count(count)
+    );
+
+    decode_7seg_hex digit0 (
+        .value(count[3:0]),
+        .segments(digit0_out)
     );
 
 endmodule
@@ -163,7 +161,6 @@ module counter #(
     end
 
 endmodule
-`default_nettype wire
 
 
 //   -- 0 --
@@ -191,7 +188,7 @@ module decode_7seg_hex(
         4'h6:  segments = 7'b1111101; // Beware, 6 looks very similar to b
         4'h7:  segments = 7'b0000111;
         4'h8:  segments = 7'b1111111;
-        4'h9:  segments = 7'b1101111;
+        4'h9:  segments = 7'b1100111;
         4'hA:  segments = 7'b1110111;
         4'hB:  segments = 7'b1111100;
         4'hC:  segments = 7'b0111001;
@@ -201,3 +198,5 @@ module decode_7seg_hex(
     endcase
 
 endmodule
+
+`default_nettype wire

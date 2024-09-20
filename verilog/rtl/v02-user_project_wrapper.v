@@ -82,7 +82,7 @@ module user_project_wrapper #(
 /* User project is instantiated  here   */
 /*--------------------------------------*/
 
-user_proj_example mprj (
+user_proj_example #(.BITS(BITS)) mprj (
 `ifdef USE_POWER_PINS
 	.vccd1(vccd1),	// User area 1 1.8V power
 	.vssd1(vssd1),	// User area 1 digital ground
@@ -110,15 +110,14 @@ user_proj_example mprj (
     .la_oenb (la_oenb),
 
     // IO Pads...
-
-    .io_in ({io_in[37:30],io_in[7:0]}), // Unused in this design.
-    // 16 bits of counter binary output are split between highest & lowest 8 GPIOs:
-    .io_out({io_out[37:30],io_out[7:0]}),
-    .io_oeb({io_oeb[37:30],io_oeb[7:0]}),
-    // 7-seg outputs for lowest hex digit are GPIO[14:8].
-    // The segments are active high, i.e. common-cathode:
-    .digit0_out(io_out[14:8]),
-    .digit0_oeb(io_oeb[14:8]),
+    // Inputs unused in this design:
+    .io_in (io_in[37:37-BITS+1]),
+    // Counter binary output is at the top of our GPIOs:
+    .count_out(io_out[37:37-BITS+1]),
+    .count_oeb(io_oeb[37:37-BITS+1]),
+    // 7-seg output for lowest hex digit starts at GPIO[5]:
+    .digit0_out(io_out[11:5]),
+    .digot0_oeb(io_oeb[11:5])
 
     // IRQ
     .irq(user_irq)

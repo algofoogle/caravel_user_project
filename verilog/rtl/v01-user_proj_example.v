@@ -44,36 +44,36 @@ module user_proj_example #(
 `endif
 
     // Wishbone Slave ports (WB MI A)
-    input wb_clk_i,
-    input wb_rst_i,             // Core (Wishbone) reset signal (active high).
-    input wbs_stb_i,
-    input wbs_cyc_i,
-    input wbs_we_i,
-    input [3:0] wbs_sel_i,
-    input [31:0] wbs_dat_i,
-    input [31:0] wbs_adr_i,
-    output wbs_ack_o,
-    output [31:0] wbs_dat_o,
+    input               wb_clk_i,       // Wishbone (core) clock
+    input               wb_rst_i,       // Wishbone (core) reset
+    input               wbs_stb_i,      // Strobe (i.e. start transaction)
+    input               wbs_cyc_i,      // Cycle (i.e. transaction in progress)
+    input               wbs_we_i,       // Write Enable: If high, Master is writing, else reading
+    input [3:0]         wbs_sel_i,      // Which of up to 4 bytes in 32-bit data word are being accessed?
+    input [31:0]        wbs_dat_i,      // Data coming in from the Master
+    input [31:0]        wbs_adr_i,      // Base address the Master is accessing
+    output              wbs_ack_o,      // Acknowledge: Slave pulse high transaction is complete
+    output [31:0]       wbs_dat_o,      // Data going out from Slave to Master
 
     // Logic Analyzer Signals
-    input  [127:0] la_data_in,
-    output [127:0] la_data_out,
-    input  [127:0] la_oenb,
+    input  [127:0]      la_data_in,
+    output [127:0]      la_data_out,
+    input  [127:0]      la_oenb,
 
     // IOs
-    input  [BITS-1:0] io_in,    // Unused in this design.
-    output [BITS-1:0] io_out,   // Counter binary output.
-    output [BITS-1:0] io_oeb,   // Output enables (active low).
-    output [6:0] digit0_out,    // Counter lowest nibble as a 7-seg hex digit.
-    output [6:0] digit0_oeb,    // Output enables (active low).
+    input  [BITS-1:0]   io_in,
+    output [BITS-1:0]   io_out,
+    output [BITS-1:0]   io_oeb,
 
     // IRQ
     output [2:0] irq
 );
-    wire clk;
-    wire rst;
+    // CPU LA[64] can drive clock directly (if la_oenb is low); else use wb_clk_i as clock source:
+    wire clk = (~la_oenb[64]) ? la_data_in[64]: wb_clk_i;
+    // CPU LA[65] can drive reset directly (if la_oenb is low); else use wb_rst_i as reset source:
+    wire rst = (~la_oenb[65]) ? la_data_in[65]: wb_rst_i;
 
-    wire [BITS-1:0] rdata; 
+    wire [BITS-1:0] rdata;
     wire [BITS-1:0] wdata;
     wire [BITS-1:0] count;
 
@@ -89,26 +89,15 @@ module user_proj_example #(
 
     // IO
     assign io_out = count;
-    // Disable these outputs while we're in reset:
     assign io_oeb = {(BITS){rst}};
-    assign digit0_oeb = {7{rst}};
-
-    // Convert lower nibble of count to a 7-segment hex digit output:
-    decode_7seg_hex digit0(
-        .value(count[3:0]),
-        .segments(digit0_out)
-    );
 
     // IRQ
-    assign irq = 3'b000;	// Unused in this design.
+    assign irq = 3'b000;	// Unused
 
     // LA
     assign la_data_out = {{(128-BITS){1'b0}}, count};
     // Assuming LA probes [63:32] are for controlling the count register  
     assign la_write = ~la_oenb[63:64-BITS] & ~{BITS{valid}};
-    // Assuming LA probes [65:64] are for controlling the count clk & reset  
-    assign clk = (~la_oenb[64]) ? la_data_in[64]: wb_clk_i;
-    assign rst = (~la_oenb[65]) ? la_data_in[65]: wb_rst_i;
 
     counter #(
         .BITS(BITS)
@@ -164,40 +153,3 @@ module counter #(
 
 endmodule
 `default_nettype wire
-
-
-//   -- 0 --
-//  |       |
-//  5       1
-//  |       |
-//   -- 6 --
-//  |       |
-//  4       2
-//  |       |
-//   -- 3 --
-
-module decode_7seg_hex(
-    input [3:0] value,
-    output reg [6:0] segments
-);
-    always @(*) case (value)
-                        //   6543210
-        4'h0:  segments = 7'b0111111;
-        4'h1:  segments = 7'b0000110;
-        4'h2:  segments = 7'b1011011;
-        4'h3:  segments = 7'b1001111;
-        4'h4:  segments = 7'b1100110;
-        4'h5:  segments = 7'b1101101;
-        4'h6:  segments = 7'b1111101; // Beware, 6 looks very similar to b
-        4'h7:  segments = 7'b0000111;
-        4'h8:  segments = 7'b1111111;
-        4'h9:  segments = 7'b1101111;
-        4'hA:  segments = 7'b1110111;
-        4'hB:  segments = 7'b1111100;
-        4'hC:  segments = 7'b0111001;
-        4'hD:  segments = 7'b1011110;
-        4'hE:  segments = 7'b1111001;
-        4'hF:  segments = 7'b1110001;
-    endcase
-
-endmodule
