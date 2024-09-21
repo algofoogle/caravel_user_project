@@ -19,45 +19,79 @@ from caravel_cocotb.caravel_interfaces import test_configure
 from caravel_cocotb.caravel_interfaces import report_test
 import cocotb
 
+async def mgmt_gpio_pulse(caravelEnv):
+    await caravelEnv.wait_mgmt_gpio(1)
+    await caravelEnv.wait_mgmt_gpio(0)
+
+def counter_value(caravelEnv):
+    return int((caravelEnv.monitor_gpio(37,30).binstr + caravelEnv.monitor_gpio(7,0).binstr),2)
+
 @cocotb.test()
 @report_test
 async def counter_wb(dut):
-    caravelEnv = await test_configure(dut,timeout_cycles=22620)
+    caravelEnv = await test_configure(dut,timeout_cycles=26000)
 
-    cocotb.log.info(f"[TEST] Start counter_wb test")  
-    # wait for start of sending
+    # io_in[29]=1: hold digit_pol_in is high.
+    caravelEnv.drive_gpio_in(29, 1)
+
+    cocotb.log.info(f"[TEST] Start counter_wb test")
     await caravelEnv.release_csb()
-    await caravelEnv.wait_mgmt_gpio(1)
-    cocotb.log.info(f"[TEST] finish configuration") 
-    overwrite_val = 7 # value will be written to the counter by wishbone 
-    # expect value bigger than 7 
-    received_val = int ((caravelEnv.monitor_gpio(37,30).binstr + caravelEnv.monitor_gpio(7,0).binstr ),2)  
-    counter = received_val
+
+    # Wait for each stage of the firmware to signal its completion
+    # via pulses on the management gpio pin:
+    await mgmt_gpio_pulse(caravelEnv)
+    cocotb.log.info(f"[TEST] Pulse 1: MGMT gpio start pulse")
+    await mgmt_gpio_pulse(caravelEnv)
+    cocotb.log.info(f"[TEST] Pulse 2: Initial LA config done")
+    await mgmt_gpio_pulse(caravelEnv)
+    cocotb.log.info(f"[TEST] Pulse 3: GPIO config done")
+    await mgmt_gpio_pulse(caravelEnv)
+    cocotb.log.info(f"[TEST] Pulse 4: Configuration done; counter rst released")
+
+    # Value we expect the firmware will write to the counter, via Wishbone:
+    overwrite_val = 7
+
+    # Read current counter value
+    # (expect a value >7, as it has been counting since we
+    # released rst and pulsed the mgmt gpio, and that takes quite a few cycles):
+    expected = counter_value(caravelEnv)
+    cocotb.log.info(f"[TEST] Sampled counter value: {expected}")
+
     await cocotb.triggers.ClockCycles(caravelEnv.clk,1)
 
-    while True: # wait until the value 1 start counting after the initial
-        received_val = int ((caravelEnv.monitor_gpio(37,30).binstr + caravelEnv.monitor_gpio(7,0).binstr ),2)  
-        if counter == 0xFFFF: # rollover 
-            counter = 0
+    # Track expected counter value with actual counter value...
+    while True:
+        actual = counter_value(caravelEnv)
+        if expected == 0xFFFF: # rollover
+            expected = 0
         else: 
-            counter +=1
-        if received_val != counter: 
-            if received_val == overwrite_val: 
-                counter = received_val +1
-                cocotb.log.info(f"Counter value has been overwritten by wishbone to be {received_val}")
-                while True: #wait until the wishbone writing finished and the counter start running again
-                    received_val = int ((caravelEnv.monitor_gpio(37,30).binstr + caravelEnv.monitor_gpio(7,0).binstr ),2)  
-                    if counter == received_val: 
+            expected +=1
+        # If actual counter value differs from expected, then
+        # it hopefully means the firmware code updated the actual counter value...
+        if actual != expected:
+            cocotb.log.info(f"[TEST] Expected vs. actual counter differs: expected={expected} actual={actual}")
+            if actual == overwrite_val:
+                cocotb.log.info(f"[TEST] Counter value was overwritten by Wishbone to: {actual}")
+                # Now wait until counter has started counting again
+                # (so we know Wishbone writing is finished)
+                expected = actual +1
+                while True:
+                    actual = counter_value(caravelEnv)
+                    if expected == actual:
+                        #SMELL: Make sure actual hasn't overshot or gone the wrong direction.
                         break
                     await cocotb.triggers.ClockCycles(caravelEnv.clk,1)
-                cocotb.log.info(f"Counter value has been overwritten by wishbone to be {received_val}")
+                # OK; counter is running again.
+                cocotb.log.info(f"[TEST] Counter is now {actual}; started running again")
                 break
             else: 
-                cocotb.log.error(f"Counter has wrong value before overwrite happened expected: {counter} received: {received_val}")
+                cocotb.log.error(f"[TEST] Counter got wrong value before overwrite happened: expected={expected} actual={actual}")
         await cocotb.triggers.ClockCycles(caravelEnv.clk,1)
 
+    # Now ensure counter continues to track for 100 more counts:
     for i in range(100):
-        if counter != int ((caravelEnv.monitor_gpio(37,30).binstr + caravelEnv.monitor_gpio(7,0).binstr ),2) :
-            cocotb.log.error(f"Counter have wrong value expected = {counter} recieved = {int ((caravelEnv.monitor_gpio(37,30).binstr + caravelEnv.monitor_gpio(7,0).binstr ),2) }")
+        actual = counter_value(caravelEnv)
+        if expected != actual:
+            cocotb.log.error(f"[TEST] Counter has wrong value: expected={expected} actual={actual}")
         await cocotb.triggers.ClockCycles(caravelEnv.clk,1)
-        counter +=1
+        expected +=1
