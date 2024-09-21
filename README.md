@@ -5,6 +5,8 @@
 | :exclamation: Important Note            |
 |-----------------------------------------|
 
+https://github.com/jeffdi/ci2409_test but with 7-seg decoder added.
+
 ## Please fill in your project documentation in this README.md file 
 
 Refer to [README](docs/source/index.md) for this sample project documentation.
