@@ -64,8 +64,9 @@ module user_proj_example #(
     input  [BITS-1:0] io_in,    // Unused in this design.
     output [BITS-1:0] io_out,   // Counter binary output.
     output [BITS-1:0] io_oeb,   // Output enables (active low).
-    output [6:0] digit0_out,    // Counter lowest nibble as a 7-seg hex digit.
+    output [6:0] digit0_out,    // Lowest hex digit of counter, 7-seg coding
     output [6:0] digit0_oeb,    // Output enables (active low).
+    input digit_pol_in,         // Polarity for segments of digit0: 0=active-low, 1=active-high
 
     // IRQ
     output [2:0] irq
@@ -96,8 +97,12 @@ module user_proj_example #(
     // Convert lower nibble of count to a 7-segment hex digit output:
     decode_7seg_hex digit0(
         .value(count[3:0]),
-        .segments(digit0_out)
+        .segments(digit0_segments)
     );
+
+    wire [6:0] digit0_segments;
+    // Invert segment polarity if needed:
+    assign digit0_out = digit_pol ? digit0_segments : ~digit0_segments;
 
     // IRQ
     assign irq = 3'b000;	// Unused in this design.
@@ -109,6 +114,8 @@ module user_proj_example #(
     // Assuming LA probes [65:64] are for controlling the count clk & reset  
     assign clk = (~la_oenb[64]) ? la_data_in[64]: wb_clk_i;
     assign rst = (~la_oenb[65]) ? la_data_in[65]: wb_rst_i;
+    // LA [66] can override digit0_pol_in:
+    wire digit_pol = (~la_oenb[66]) ? la_data_in[66] : digit_pol_in;
 
     counter #(
         .BITS(BITS)
@@ -127,6 +134,7 @@ module user_proj_example #(
 
 endmodule
 
+
 module counter #(
     parameter BITS = 16
 )(
@@ -144,7 +152,7 @@ module counter #(
 
     always @(posedge clk) begin
         if (reset) begin
-            count <= 1'b0;
+            count <= {BITS{1'b0}};
             ready <= 1'b0;
         end else begin
             ready <= 1'b0;
@@ -188,12 +196,12 @@ module decode_7seg_hex(
         4'h3:  segments = 7'b1001111;
         4'h4:  segments = 7'b1100110;
         4'h5:  segments = 7'b1101101;
-        4'h6:  segments = 7'b1111101; // Beware, 6 looks very similar to b
+        4'h6:  segments = 7'b1111101;
         4'h7:  segments = 7'b0000111;
         4'h8:  segments = 7'b1111111;
         4'h9:  segments = 7'b1101111;
         4'hA:  segments = 7'b1110111;
-        4'hB:  segments = 7'b1111100;
+        4'hB:  segments = 7'b1111100; // NOTE: 'b' looks very similar to '6'
         4'hC:  segments = 7'b0111001;
         4'hD:  segments = 7'b1011110;
         4'hE:  segments = 7'b1111001;

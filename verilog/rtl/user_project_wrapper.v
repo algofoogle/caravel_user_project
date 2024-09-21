@@ -116,9 +116,10 @@ user_proj_example mprj (
     .io_out({io_out[37:30],io_out[7:0]}),
     .io_oeb({io_oeb[37:30],io_oeb[7:0]}),
     // 7-seg outputs for lowest hex digit are GPIO[14:8].
-    // The segments are active high, i.e. common-cathode:
     .digit0_out(io_out[14:8]),
     .digit0_oeb(io_oeb[14:8]),
+    // Segment polarity (active high vs low) follows io_in[29] if not overridden by LA[66]:
+    .digit_pol_in(io_in[29]),
 
     // IRQ
     .irq(user_irq)
