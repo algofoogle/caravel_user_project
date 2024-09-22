@@ -102,7 +102,8 @@ module user_proj_example #(
             digit_segments[0]
         })
     );
-    //NOTE: The above is 4 instances, each mapping 4 bits of 'count' to a digit_segments[n] instance.
+    //NOTE: decode_7seg_hex is instanced 4 times.
+    // Each digit[n] converts 4 bits of 'count' to a digit_segments[n] instance.
 
     // IRQs (can be disabled in software):
     // IRQ0: Count hit zero:
@@ -114,55 +115,25 @@ module user_proj_example #(
 
     assign io_oeb[35:0] = {36{rst}}; // Tri-state outputs while rst is asserted.
 
-    wire [35:0] mode_0_outputs = {
-        digit_segments[0],  // 35:29
-        la_oenb[67:64],     // 28:25
-        la_data_out[67:64], // 24:21
-        1'b0,               // 20
-        rst,                // 19
-        valid,              // 18
-        (|la_write),        // 17
-        (|wstrb),           // 16
-        count[15:0]         // 15:0
-    };
-
-    wire [35:0] mode_1_outputs = {
-        digit_segments[0],  // 35:29
-        digit_segments[1],  // 28:22
-        digit_segments[2],  // 21:15
-        digit_segments[3],  // 14:8
-        count[7:0]          // 7:0
-    };
-
-    assign io_out[35:0] = mode ? mode_1_outputs : mode_0_outputs;
-
-    // I'm not sure iverilog properly handles the below, so I've gone
-    // with the alternative simple mux approach instead.
-    // // This is not sequential logic; it's an easier way to represent a mux that changes
-    // // the function of all the outputs based on which 'mode' is selected:
-    // always @(*) begin
-    //     // Common to both modes:
-    //         io_out[ 7: 0]   = count[7:0];
-    //         io_out[35:29]   = digit_segments[0];
-    //         io_oeb[35: 0]   = {36{rst}}; // Tri-state outputs while rst is asserted.
-    //     if (mode) begin
-    //         // mode is 1: 4x 7-seg outputs
-    //         io_out[28:22]   = digit_segments[1];
-    //         io_out[21:15]   = digit_segments[2];
-    //         io_out[14: 8]   = digit_segments[3];
-    //     end else begin
-    //         // mode is 0: 1x 7-seg output with extra counter bits & LA debug outputs
-    //         io_out[28:25]   = la_oenb[67:64];
-    //         io_out[24:21]   = la_data_out[67:64];
-    //         // io_out[20]      = clk;
-    //         io_out[20]      = 1'b0; // Unused.
-    //         io_out[19]      = rst;
-    //         io_out[18]      = valid;
-    //         io_out[17]      = |la_write;
-    //         io_out[16]      = |wstrb;
-    //         io_out[15:8]    = count[15:8];
-    //     end
-    // end
+    // Logic below lets 'mode' select between two different sets of output
+    // for all chip GPIOs 35 down to 0:
+    assign io_out[35:0] = mode ? mode1_outs : mode0_outs;
+    wire [35:0] mode0_outs;
+    assign mode0_outs[35:29]    = digit_segments[0];
+    assign mode0_outs[28:25]    = la_oenb[67:64];
+    assign mode0_outs[24:21]    = la_data_out[67:64];
+    assign mode0_outs[20]       = 1'b0;
+    assign mode0_outs[19]       = rst;
+    assign mode0_outs[18]       = valid;
+    assign mode0_outs[17]       = (|la_write);
+    assign mode0_outs[16]       = (|wstrb);
+    assign mode0_outs[15:0]     = count[15:0];
+    wire [35:0] mode1_outs;
+    assign mode1_outs[35:29]    = digit_segments[0];
+    assign mode1_outs[28:22]    = digit_segments[1];
+    assign mode1_outs[21:15]    = digit_segments[2];
+    assign mode1_outs[14:8]     = digit_segments[3];
+    assign mode1_outs[7:0]      = count[7:0];
 
     // LA
     assign la_data_out = {{(128-BITS){1'b0}}, count};
@@ -202,8 +173,8 @@ module counter #(
     input valid,
     input [3:0] wstrb,
     input [BITS-1:0] wdata,
-    input [BITS-1:0] la_write,
-    input [BITS-1:0] la_input,
+    input [BITS-1:0] la_write,  // LA write mask: Which counter bits LA wants to overwrite.
+    input [BITS-1:0] la_input,  // LA write data: Value of each bit we're writing.
     output reg ready,
     output reg [BITS-1:0] rdata,
     output reg [BITS-1:0] count
@@ -214,17 +185,26 @@ module counter #(
             count <= {BITS{1'b0}};
             ready <= 1'b0;
         end else begin
+            //NOTE: By Verilog convention, on the next clock cycle
+            // 'ready' and 'count' will take whichever is the LAST
+            // assignment in the logic below.
             ready <= 1'b0;
             if (~|la_write) begin
+                // By default, counter increments:
                 count <= count + 1'b1;
             end
             if (valid && !ready) begin
-                ready <= 1'b1;
-                rdata <= count;
+                ready <= 1'b1;  // Valid WB transaction, so ACK it.
+                rdata <= count; // Assume a WB read by default.
+                // Handle WB writing 1 or both bytes of our 16-bit counter:
                 if (wstrb[0]) count[7:0]   <= wdata[7:0];
                 if (wstrb[1]) count[15:8]  <= wdata[15:8];
+                //SMELL: Above assumes BITS==16.
             end else if (|la_write) begin
-                count <= la_write & la_input;
+                // LA is being used to override either the full 'count' value,
+                // or some masked pattern of its bits within its next value
+                // (if la_write is not 0xFFFF):
+                count <= ((count+1) & ~la_write) | (la_input & la_write);
             end
         end
     end

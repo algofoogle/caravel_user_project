@@ -27,10 +27,10 @@ void main(){
     GPIOs_configure(37, GPIO_MODE_USER_STD_INPUT_NOPULL);
     GPIOs_loadConfigs(); // load the configuration 
     ManagmentGpio_write(1); // configuration finished 
-    // configure la [63:32] as output from cpu
-    LogicAnalyzer_write(1,7<<16);
-    LogicAnalyzer_outputEnable(1,0);
+    LogicAnalyzer_write(1,7<<16); // Prep counter value 7 in upper 16 bits of LA bank 1.
+    // Configure LA [63:32] all as output from CPU:
+    LogicAnalyzer_outputEnable(1,0x00000000); // This triggers writing 7 to counter.
     ManagmentGpio_write(0); // configuration finished 
-    LogicAnalyzer_outputEnable(1,0xFFFFFFFF);
+    LogicAnalyzer_outputEnable(1,0xFFFFFFFF); // Done writing.
     return;
 }

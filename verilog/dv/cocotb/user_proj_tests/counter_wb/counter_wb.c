@@ -29,15 +29,16 @@ void main(){
     // Disable housekeeping SPI:
     enableHkSpi(0);
 
-    // Signal via la_oenb[66:65] that we want to override the rst & pol signals:
-    // 64: clk - 1 = keep free-running
-    // 65: rst - 0 = override rst signal
-    // 66: pol - 0 = override digit_pol_in
-    LogicAnalyzer_outputEnable(2, 0b001);
+    // Signal via la_oenb[67:65] which signals we want to override:
+    // 64: clk : 1 = keep free-running
+    // 65: rst : 0 = override rst signal
+    // 66: pol : 0 = override digit_pol_in
+    // 67: mode: 1 = use external mode_in
+    LogicAnalyzer_outputEnable(2, 0b1001);
     // NOTE: Inverse is written to la_oenb registers, but this gets inverted in-circuit?
 
     // Hold pol high, and hold rst asserted:
-    LogicAnalyzer_write(2,0b110); // rst high
+    LogicAnalyzer_write(2,0b1110); // rst high
 
     pulse_gpio(); // Signal initial LA config done.
 
@@ -62,9 +63,9 @@ void main(){
 
     // Reset counter, by pulsing rst via LA.
     // NOTE: pol is held high (active-high LED segment outputs).
-    LogicAnalyzer_write(2,0b100); // rst low
-    LogicAnalyzer_write(2,0b110); // rst high
-    LogicAnalyzer_write(2,0b100); // rst low again
+    LogicAnalyzer_write(2,0b1100); // rst low
+    LogicAnalyzer_write(2,0b1110); // rst high
+    LogicAnalyzer_write(2,0b1100); // rst low again
 
     // Signal that configuration is finished and rst has been released.
     pulse_gpio();

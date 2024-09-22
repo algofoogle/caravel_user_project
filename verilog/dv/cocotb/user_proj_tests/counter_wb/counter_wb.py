@@ -29,10 +29,48 @@ async def mgmt_gpio_pulse(caravelEnv):
 def counter_value(caravelEnv):
     return int(caravelEnv.monitor_gpio(15,0).binstr,2)
 
+def hex_from_7seg(pattern):
+    seg_map = {
+        '0111111': 0x0,
+        '0000110': 0x1,
+        '1011011': 0x2,
+        '1001111': 0x3,
+        '1100110': 0x4,
+        '1101101': 0x5,
+        '1111101': 0x6,
+        '0000111': 0x7,
+        '1111111': 0x8,
+        '1101111': 0x9,
+        '1110111': 0xA,
+        '1111100': 0xB,
+        '0111001': 0xC,
+        '1011110': 0xD,
+        '1111001': 0xE,
+        '1110001': 0xF
+    }
+    return seg_map.get(pattern)
+
+# Read and interpret 7seg hex digit patterns to get counter value:
+def counter_hex_digits(caravelEnv, lowest_only = False):
+    if lowest_only:
+        digit_ios = [ (35,29) ] # digit0.
+    else:
+        digit_ios = [ (14,8), (21,15), (28,22), (35,29) ] # digit3 down to digit0.
+    counter = 0
+    for r in digit_ios:
+        counter <<= 4
+        o = caravelEnv.monitor_gpio(*r).binstr
+        n = hex_from_7seg(o)
+        if n is None:
+            cocotb.log.error(f"Invalid 7seg digit {o} in {caravelEnv.monitor_gpio(37,0)}")
+            return -1
+        counter |= n
+    return counter
+
 @cocotb.test()
 @report_test
 async def counter_wb(dut):
-    caravelEnv = await test_configure(dut,timeout_cycles=37000)
+    caravelEnv = await test_configure(dut,timeout_cycles=50000)
 
     # Hold digit_pol_in high:
     caravelEnv.drive_gpio_in(DIGIT_POL_IN, 1)
@@ -94,9 +132,29 @@ async def counter_wb(dut):
         await cocotb.triggers.ClockCycles(caravelEnv.clk,1)
 
     # Now ensure counter continues to track for 100 more counts:
+    cocotb.log.info(f"[TEST] Testing 100 counts in mode 0...")
     for i in range(100):
         actual = counter_value(caravelEnv)
         if expected != actual:
             cocotb.log.error(f"[TEST] Counter has wrong value: expected={expected} actual={actual}")
+        # Check lowest 7seg hex digit:
+        digit0_expected = expected & 0xF
+        digit0_actual = counter_hex_digits(caravelEnv, lowest_only=True)
+        if digit0_expected != digit0_actual:
+            cocotb.log.error(f"[TEST] digit0 output is wrong: expected={digit0_expected} actual={digit0_actual}")
         await cocotb.triggers.ClockCycles(caravelEnv.clk,1)
         expected +=1
+
+    # Now test 10,000 counts in mode 1 (to test all 4 hex digits)...
+    # Hold mode high (for 4x digits output):
+    cocotb.log.info(f"[TEST] Testing 10,000 counts in mode 1 (all 4 hex digits)...")
+    caravelEnv.drive_gpio_in(MODE_IN, 1)
+    for i in range(10000):
+        await cocotb.triggers.ClockCycles(caravelEnv.clk,1)
+        if expected == 0xFFFF: # rollover
+            expected = 0
+        else:
+            expected +=1
+        actual = counter_hex_digits(caravelEnv, lowest_only=False)
+        if expected != actual:
+            cocotb.log.error(f"[TEST] 4x Hex digits output is wrong: expected={expected} actual={actual} full={caravelEnv.monitor_gpio(37,0)}")
