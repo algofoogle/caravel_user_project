@@ -14,3 +14,42 @@ This is mostly the same as https://github.com/jeffdi/ci2409_test. General featur
 
 Refer to [README](docs/source/index.md) for the standard Caravel User Project documentation which also applies to this example.
 
+## Output mode selection
+
+`IN[36]` specifies what 'mode' we are in, to determine how outputs behave. The following are common to both modes:
+
+| GPIO   | Dir | Function         |
+|-|-|-|
+| 35:29  | Out | `digit0`         |
+| 7:0    | Out | `count[7:0]`     |
+
+NOTE: This `mode` input on GPIO 36 can be overridden by `LA[67]`.
+
+
+### Mode 0: Full counter and debug output
+
+| GPIO   | Dir | Function               |
+|-|-|-|
+| 37     | In  | `digit_pol`            |
+| 36     | In  | `mode`==0              |
+| 35:29  | Out | `digit0`               |
+| 28:25  | Out | `la_oenb[67:64]`       |
+| 24:21  | Out | `la_data_out[67:64]`   |
+| 20     | Out | (Unused)               |
+| 19     | Out | `rst`                  |
+| 18     | Out | `valid`                |
+| 17     | Out | Any `la_write` high?   |
+| 16     | Out | Any `wstrb` high?      |
+| 15:0   | Out | `count[15:0]`          |
+
+### Mode 1: Half-counter and full 7-seg output
+
+| GPIO   | Dir | Function               |
+|-|-|-|
+| 37     | In  | `digit_pol`            |
+| 36     | In  | `mode`==1              |
+| 35:29  | Out | `digit0`               |
+| 28:22  | Out | `digit1`               |
+| 21:15  | Out | `digit2`               |
+| 14:8   | Out | `digit3`               |
+| 7:0    | Out | `count[7:0]`           |

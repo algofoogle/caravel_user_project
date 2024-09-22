@@ -88,41 +88,32 @@ user_proj_example mprj (
 	.vssd1(vssd1),	// User area 1 digital ground
 `endif
 
-    .wb_clk_i(wb_clk_i),
-    .wb_rst_i(wb_rst_i),
+    .wb_clk_i       (wb_clk_i),
+    .wb_rst_i       (wb_rst_i),
 
     // Wishbone Slave interface,
     // connected to MGMT SoC's Wishbone Master:
-
-    .wbs_cyc_i(wbs_cyc_i),
-    .wbs_stb_i(wbs_stb_i),
-    .wbs_we_i(wbs_we_i),
-    .wbs_sel_i(wbs_sel_i),
-    .wbs_adr_i(wbs_adr_i),
-    .wbs_dat_i(wbs_dat_i),
-    .wbs_ack_o(wbs_ack_o),
-    .wbs_dat_o(wbs_dat_o),
+    .wbs_cyc_i      (wbs_cyc_i),
+    .wbs_stb_i      (wbs_stb_i),
+    .wbs_we_i       (wbs_we_i),
+    .wbs_sel_i      (wbs_sel_i),
+    .wbs_adr_i      (wbs_adr_i),
+    .wbs_dat_i      (wbs_dat_i),
+    .wbs_ack_o      (wbs_ack_o),
+    .wbs_dat_o      (wbs_dat_o),
 
     // Logic Analyzer
-
-    .la_data_in(la_data_in),
-    .la_data_out(la_data_out),
-    .la_oenb (la_oenb),
+    .la_data_in     (la_data_in),
+    .la_data_out    (la_data_out),
+    .la_oenb        (la_oenb),
 
     // IO Pads...
-
-    .io_in ({io_in[37:30],io_in[7:0]}), // Unused in this design.
-    // 16 bits of counter binary output are split between highest & lowest 8 GPIOs:
-    .io_out({io_out[37:30],io_out[7:0]}),
-    .io_oeb({io_oeb[37:30],io_oeb[7:0]}),
-    // 7-seg outputs for lowest hex digit are GPIO[14:8].
-    .digit0_out(io_out[14:8]),
-    .digit0_oeb(io_oeb[14:8]),
-    // Segment polarity (active high vs low) follows io_in[29] if not overridden by LA[66]:
-    .digit_pol_in(io_in[29]),
+    .io_in          (io_in),
+    .io_out         (io_out),
+    .io_oeb         (io_oeb),
 
     // IRQ
-    .irq(user_irq)
+    .irq            (user_irq)
 );
 
 endmodule	// user_project_wrapper

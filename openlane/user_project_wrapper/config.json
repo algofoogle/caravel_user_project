@@ -1,10 +1,16 @@
 {
+
+    "RUN_KLAYOUT_DRC": 0,
+    "RUN_KLAYOUT_XOR": 0,
+    "RUN_MAGIC_DRC": 0,
+    "ROUTING_CORES": 16,
+
+
     "DESIGN_NAME": "user_project_wrapper",
     "VERILOG_FILES": [
         "dir::../../verilog/rtl/defines.v",
         "dir::../../verilog/rtl/user_project_wrapper.v"
     ],
-    "ROUTING_CORES": 1,
     "CLOCK_PERIOD": 25,
     "CLOCK_PORT": "wb_clk_i",
     "CLOCK_NET": "mprj.clk",
