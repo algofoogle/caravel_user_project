@@ -20,14 +20,19 @@ void main(){
     ManagmentGpio_outputEnable();
     ManagmentGpio_write(0);
     enableHkSpi(0); // disable housekeeping spi
-    // configure all gpios as  user out then chenge gpios from 32 to 37 before loading this configurations
-    GPIOs_configureAll(GPIO_MODE_USER_STD_OUT_MONITORED);
-    GPIOs_configure(32,GPIO_MODE_MGMT_STD_OUTPUT);
-    GPIOs_configure(33,GPIO_MODE_MGMT_STD_OUTPUT);
-    GPIOs_configure(34,GPIO_MODE_MGMT_STD_OUTPUT);
-    GPIOs_configure(35,GPIO_MODE_MGMT_STD_OUTPUT);
-    GPIOs_configure(36,GPIO_MODE_MGMT_STD_OUTPUT);
-    GPIOs_configure(37,GPIO_MODE_MGMT_STD_OUTPUT);
+    // // configure all gpios as  user out then chenge gpios from 32 to 37 before loading this configurations
+    // GPIOs_configureAll(GPIO_MODE_USER_STD_OUT_MONITORED);
+    // GPIOs_configure(32,GPIO_MODE_MGMT_STD_OUTPUT);
+    // GPIOs_configure(33,GPIO_MODE_MGMT_STD_OUTPUT);
+    // GPIOs_configure(34,GPIO_MODE_MGMT_STD_OUTPUT);
+    // GPIOs_configure(35,GPIO_MODE_MGMT_STD_OUTPUT);
+    // GPIOs_configure(36,GPIO_MODE_MGMT_STD_OUTPUT);
+    // GPIOs_configure(37,GPIO_MODE_MGMT_STD_OUTPUT);
+    // Set all GPIOs to be bidirectional by default...
+    GPIOs_configureAll(GPIO_MODE_USER_STD_BIDIRECTIONAL);
+    // ...though upper 2 need to be inputs:
+    GPIOs_configure(36, GPIO_MODE_USER_STD_INPUT_NOPULL);
+    GPIOs_configure(37, GPIO_MODE_USER_STD_INPUT_NOPULL);
     GPIOs_loadConfigs(); // load the configuration 
     // reset counter
     LogicAnalyzer_outputEnable(2,0xFFFFFFFD);

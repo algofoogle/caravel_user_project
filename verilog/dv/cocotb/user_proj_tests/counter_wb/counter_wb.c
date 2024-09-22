@@ -41,47 +41,11 @@ void main(){
 
     pulse_gpio(); // Signal initial LA config done.
 
-    // Set our preferred GPIO modes:
-    reg_mprj_io_0  = GPIO_MODE_USER_STD_BIDIRECTIONAL;  // count[0]
-    reg_mprj_io_1  = GPIO_MODE_USER_STD_BIDIRECTIONAL;  // count[1]
-    reg_mprj_io_2  = GPIO_MODE_USER_STD_BIDIRECTIONAL;  // count[2]
-    reg_mprj_io_3  = GPIO_MODE_USER_STD_BIDIRECTIONAL;  // count[3]
-    reg_mprj_io_4  = GPIO_MODE_USER_STD_BIDIRECTIONAL;  // count[4]
-    reg_mprj_io_5  = GPIO_MODE_USER_STD_BIDIRECTIONAL;  // count[5]
-    reg_mprj_io_6  = GPIO_MODE_USER_STD_BIDIRECTIONAL;  // count[6]
-    reg_mprj_io_7  = GPIO_MODE_USER_STD_BIDIRECTIONAL;  // count[7]
-    reg_mprj_io_8  = GPIO_MODE_USER_STD_BIDIRECTIONAL;  // digit0_out[0]
-    reg_mprj_io_9  = GPIO_MODE_USER_STD_BIDIRECTIONAL;  // digit0_out[1]
-    reg_mprj_io_10 = GPIO_MODE_USER_STD_BIDIRECTIONAL;  // digit0_out[2]
-    reg_mprj_io_11 = GPIO_MODE_USER_STD_BIDIRECTIONAL;  // digit0_out[3]
-    reg_mprj_io_12 = GPIO_MODE_USER_STD_BIDIRECTIONAL;  // digit0_out[4]
-    reg_mprj_io_13 = GPIO_MODE_USER_STD_BIDIRECTIONAL;  // digit0_out[5]
-    reg_mprj_io_14 = GPIO_MODE_USER_STD_BIDIRECTIONAL;  // digit0_out[6]
-
-    reg_mprj_io_15 = GPIO_MODE_MGMT_STD_INPUT_NOPULL;   // Unused
-    reg_mprj_io_16 = GPIO_MODE_MGMT_STD_INPUT_NOPULL;   // Unused
-    reg_mprj_io_17 = GPIO_MODE_MGMT_STD_INPUT_NOPULL;   // Unused
-    reg_mprj_io_18 = GPIO_MODE_MGMT_STD_INPUT_NOPULL;   // Unused
-    reg_mprj_io_19 = GPIO_MODE_MGMT_STD_INPUT_NOPULL;   // Unused
-    reg_mprj_io_20 = GPIO_MODE_MGMT_STD_INPUT_NOPULL;   // Unused
-    reg_mprj_io_21 = GPIO_MODE_MGMT_STD_INPUT_NOPULL;   // Unused
-    reg_mprj_io_22 = GPIO_MODE_MGMT_STD_INPUT_NOPULL;   // Unused
-    reg_mprj_io_23 = GPIO_MODE_MGMT_STD_INPUT_NOPULL;   // Unused
-    reg_mprj_io_24 = GPIO_MODE_MGMT_STD_INPUT_NOPULL;   // Unused
-    reg_mprj_io_25 = GPIO_MODE_MGMT_STD_INPUT_NOPULL;   // Unused
-    reg_mprj_io_26 = GPIO_MODE_MGMT_STD_INPUT_NOPULL;   // Unused
-    reg_mprj_io_27 = GPIO_MODE_MGMT_STD_INPUT_NOPULL;   // Unused
-    reg_mprj_io_28 = GPIO_MODE_MGMT_STD_INPUT_NOPULL;   // Unused
-
-    reg_mprj_io_29 = GPIO_MODE_USER_STD_INPUT_NOPULL;   // digit_pol_in
-    reg_mprj_io_30 = GPIO_MODE_USER_STD_BIDIRECTIONAL;  // count[8]
-    reg_mprj_io_31 = GPIO_MODE_USER_STD_BIDIRECTIONAL;  // count[9]
-    reg_mprj_io_32 = GPIO_MODE_USER_STD_BIDIRECTIONAL;  // count[10]
-    reg_mprj_io_33 = GPIO_MODE_USER_STD_BIDIRECTIONAL;  // count[11]
-    reg_mprj_io_34 = GPIO_MODE_USER_STD_BIDIRECTIONAL;  // count[12]
-    reg_mprj_io_35 = GPIO_MODE_USER_STD_BIDIRECTIONAL;  // count[13]
-    reg_mprj_io_36 = GPIO_MODE_USER_STD_BIDIRECTIONAL;  // count[14]
-    reg_mprj_io_37 = GPIO_MODE_USER_STD_BIDIRECTIONAL;  // count[15]
+    // Set all GPIOs to be bidirectional by default...
+    GPIOs_configureAll(GPIO_MODE_USER_STD_BIDIRECTIONAL);
+    // ...though upper 2 need to be inputs:
+    GPIOs_configure(36, GPIO_MODE_USER_STD_INPUT_NOPULL);
+    GPIOs_configure(37, GPIO_MODE_USER_STD_INPUT_NOPULL);
 
     // Load the above configuration:
     GPIOs_loadConfigs();

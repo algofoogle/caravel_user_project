@@ -61,9 +61,9 @@ module user_proj_example #(
     input  [127:0]      la_oenb,
 
     // IOs
-    input      [37:0]   io_in,
-    output reg [37:0]   io_out,         // This 'reg' will synth to wires because of how it's used.
-    output reg [37:0]   io_oeb,         // This 'reg' will synth to wires because of how it's used.
+    input  [37:0]       io_in,
+    output [37:0]       io_out,         // This 'reg' will synth to wires because of how it's used.
+    output [37:0]       io_oeb,         // This 'reg' will synth to wires because of how it's used.
 
     // IRQ
     output [2:0] irq
@@ -112,31 +112,57 @@ module user_proj_example #(
     // IRQ2: Sensitive to changes on mode_in:
     assign irq[2] = mode_in;
 
-    // This is not sequential logic; it's an easier way to represent a mux that changes
-    // the function of all the outputs based on which 'mode' is selected:
-    always @(*) begin
-        // Common to both modes:
-            io_out[ 7: 0]   = count[7:0];
-            io_out[35:29]   = digit_segments[0];
-            io_oeb[35: 0]   = {36{rst}}; // Tri-state outputs while rst is asserted.
-        if (mode) begin
-            // mode is 1: 4x 7-seg outputs
-            io_out[28:22]   = digit_segments[1];
-            io_out[21:15]   = digit_segments[2];
-            io_out[14: 8]   = digit_segments[3];
-        end else begin
-            // mode is 0: 1x 7-seg output with extra counter bits & LA debug outputs
-            io_out[28:25]   = la_oenb[67:64];
-            io_out[24:21]   = la_data_out[67:64];
-            // io_out[20]      = clk;
-            io_out[20]      = 1'b0; // Unused.
-            io_out[19]      = rst;
-            io_out[18]      = valid;
-            io_out[17]      = |la_write;
-            io_out[16]      = |wstrb;
-            io_out[15:8]    = count[15:8];
-        end
-    end
+    assign io_oeb[35:0] = {36{rst}}; // Tri-state outputs while rst is asserted.
+
+    wire [35:0] mode_0_outputs = {
+        digit_segments[0],  // 35:29
+        la_oenb[67:64],     // 28:25
+        la_data_out[67:64], // 24:21
+        1'b0,               // 20
+        rst,                // 19
+        valid,              // 18
+        (|la_write),        // 17
+        (|wstrb),           // 16
+        count[15:0]         // 15:0
+    };
+
+    wire [35:0] mode_1_outputs = {
+        digit_segments[0],  // 35:29
+        digit_segments[1],  // 28:22
+        digit_segments[2],  // 21:15
+        digit_segments[3],  // 14:8
+        count[7:0]          // 7:0
+    };
+
+    assign io_out[35:0] = mode ? mode_1_outputs : mode_0_outputs;
+
+    // I'm not sure iverilog properly handles the below, so I've gone
+    // with the alternative simple mux approach instead.
+    // // This is not sequential logic; it's an easier way to represent a mux that changes
+    // // the function of all the outputs based on which 'mode' is selected:
+    // always @(*) begin
+    //     // Common to both modes:
+    //         io_out[ 7: 0]   = count[7:0];
+    //         io_out[35:29]   = digit_segments[0];
+    //         io_oeb[35: 0]   = {36{rst}}; // Tri-state outputs while rst is asserted.
+    //     if (mode) begin
+    //         // mode is 1: 4x 7-seg outputs
+    //         io_out[28:22]   = digit_segments[1];
+    //         io_out[21:15]   = digit_segments[2];
+    //         io_out[14: 8]   = digit_segments[3];
+    //     end else begin
+    //         // mode is 0: 1x 7-seg output with extra counter bits & LA debug outputs
+    //         io_out[28:25]   = la_oenb[67:64];
+    //         io_out[24:21]   = la_data_out[67:64];
+    //         // io_out[20]      = clk;
+    //         io_out[20]      = 1'b0; // Unused.
+    //         io_out[19]      = rst;
+    //         io_out[18]      = valid;
+    //         io_out[17]      = |la_write;
+    //         io_out[16]      = |wstrb;
+    //         io_out[15:8]    = count[15:8];
+    //     end
+    // end
 
     // LA
     assign la_data_out = {{(128-BITS){1'b0}}, count};

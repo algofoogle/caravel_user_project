@@ -19,20 +19,25 @@ from caravel_cocotb.caravel_interfaces import test_configure
 from caravel_cocotb.caravel_interfaces import report_test
 import cocotb
 
+DIGIT_POL_IN = 37
+MODE_IN = 36
+
 async def mgmt_gpio_pulse(caravelEnv):
     await caravelEnv.wait_mgmt_gpio(1)
     await caravelEnv.wait_mgmt_gpio(0)
 
 def counter_value(caravelEnv):
-    return int((caravelEnv.monitor_gpio(37,30).binstr + caravelEnv.monitor_gpio(7,0).binstr),2)
+    return int(caravelEnv.monitor_gpio(15,0).binstr,2)
 
 @cocotb.test()
 @report_test
 async def counter_wb(dut):
-    caravelEnv = await test_configure(dut,timeout_cycles=26000)
+    caravelEnv = await test_configure(dut,timeout_cycles=37000)
 
-    # io_in[29]=1: hold digit_pol_in is high.
-    caravelEnv.drive_gpio_in(29, 1)
+    # Hold digit_pol_in high:
+    caravelEnv.drive_gpio_in(DIGIT_POL_IN, 1)
+    # Hold mode low (for full counter output):
+    caravelEnv.drive_gpio_in(MODE_IN, 0)
 
     cocotb.log.info(f"[TEST] Start counter_wb test")
     await caravelEnv.release_csb()
