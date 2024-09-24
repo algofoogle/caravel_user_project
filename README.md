@@ -61,3 +61,28 @@ NOTE: This `mode` input on GPIO 36 can be overridden by `LA[67]`.
 | 21:15  | Out | `digit2`               |
 | 14:8   | Out | `digit3`               |
 | 7:0    | Out | `count[7:0]`           |
+
+
+### Mode 0: Counter 4x 7seg
+
+*   37: mode==0
+*   36: pol
+*   35:29: digit0
+*   28:0: ...etc...
+
+### Mode 1: raybox-zero
+
+*   37: mode==1
+*   36: pol
+*   35:29: digit0
+*   28:21: VGA outs
+*   20:18: SPI1
+*   17:15: SPI2
+*   14:10: tex SPI
+*   9: inc_px
+*   8: inc_py
+*   7: gen_tex
+*   6: reg
+*   5: debug
+*   4:0: counter[4:0] (or HKSPI)
+

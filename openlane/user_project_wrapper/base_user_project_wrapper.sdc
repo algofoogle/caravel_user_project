@@ -59,6 +59,19 @@ set_multicycle_path -hold 1  -through [get_ports {wbs_cyc_i}]
 set_multicycle_path -setup 2 -through [get_ports {wbs_stb_i}]
 set_multicycle_path -hold 1  -through [get_ports {wbs_stb_i}]
 
+# The possibility of la_oenb[64] switching is leading to hold violations on hardening,
+# I think because it effectively gates/muxes the same clock to which it is also synchronous.
+# Since this is basically an artificial case where la_oenb[64] won't be switching without
+# also separately controlling the muxed clock (and related reset line), and instead this
+# signal is just for debug with infrequent changes, I'm telling the analysis to only care
+# about the case where clk is full-speed
+# (i.e. where la_oenb[64] is 1, thus not overriding, thus la_data_in[64] should be don't-care):
+set_case_analysis 1 [get_ports {la_oenb[64]}]
+# I first tried marking them as false paths to ignore them completely,
+# but the timing looked TOO good, so I gave up this approach:
+# set_false_path -hold -from [get_ports {la_data_in[64]}]
+# set_false_path -hold -from [get_ports {la_oenb[64]}]
+
 #------------------------------------------#
 # Retrieved Constraints
 #------------------------------------------#

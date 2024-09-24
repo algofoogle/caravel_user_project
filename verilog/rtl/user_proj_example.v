@@ -71,8 +71,8 @@ module user_proj_example #(
     wire clk;
     wire rst;
 
-    wire digit_pol_in   = io_in[37];    // Polarity for segments of digit0: 0=active-low, 1=active-high
-    wire mode_in        = io_in[36];    // 0 = Binary output on out[37:22]; 1 = 4x 7seg hex output on out[37:10]
+    wire mode_in        = io_in[37];    // 0 = Binary output on out[37:22]; 1 = 4x 7seg hex output on out[37:10]
+    wire digit_pol_in   = io_in[36];    // Polarity for segments of digit0: 0=active-low, 1=active-high
     assign io_out[37:36] = 2'b00;
     assign io_oeb[37:36] = 2'b11;
 
@@ -113,11 +113,11 @@ module user_proj_example #(
     // IRQ2: Sensitive to changes on mode_in:
     assign irq[2] = mode_in;
 
-    assign io_oeb[35:0] = {36{rst}}; // Tri-state outputs while rst is asserted.
-
     // Logic below lets 'mode' select between two different sets of output
     // for all chip GPIOs 35 down to 0:
     assign io_out[35:0] = mode ? mode1_outs : mode0_outs;
+    assign io_oeb[35:0] = mode ? mode1_oebs : mode0_oebs;
+
     wire [35:0] mode0_outs;
     assign mode0_outs[35:29]    = digit_segments[0];
     assign mode0_outs[28:25]    = la_oenb[67:64];
@@ -128,20 +128,70 @@ module user_proj_example #(
     assign mode0_outs[17]       = (|la_write);
     assign mode0_outs[16]       = (|wstrb);
     assign mode0_outs[15:0]     = count[15:0];
+
+    wire [35:0] mode0_oebs;
+    assign mode0_oebs[35:0]     = 36'b0; // All outputs.
+
     wire [35:0] mode1_outs;
     assign mode1_outs[35:29]    = digit_segments[0];
-    assign mode1_outs[28:22]    = digit_segments[1];
-    assign mode1_outs[21:15]    = digit_segments[2];
-    assign mode1_outs[14:8]     = digit_segments[3];
-    assign mode1_outs[7:0]      = count[7:0];
+    assign mode1_outs[28:21]    = rb_vga_out;   // uo[7:0]
+    assign mode1_outs[20:18]    = 3'b000;       // Input: SPI1
+    assign mode1_outs[17:15]    = 3'b000;       // Input: SPI2
+    assign mode1_outs[14]       = rb_tex_csb;
+    assign mode1_outs[13]       = rb_tex_sclk;
+    assign mode1_outs[12]       = rb_tex_out0;  // Bidir: tex_io0
+    assign mode1_outs[11]       = 1'b0;         // Input: tex_io1
+    assign mode1_outs[10]       = 1'b0;         // Input: tex_io2
+    assign mode1_outs[9]        = 1'b0;         // Input: inc_px
+    assign mode1_outs[8]        = 1'b0;         // Input: inc_py
+    assign mode1_outs[7]        = 1'b0;         // Input: gen_tex
+    assign mode1_outs[6]        = 1'b0;         // Input: reg
+    assign mode1_outs[5]        = 1'b0;         // Input: debug
+    assign mode1_outs[4:0]      = count[4:0];
+
+    wire [35:0] mode1_oebs;
+    assign mode1_oebs[35:29]    = 7'b0000000;   // digit0
+    assign mode1_oebs[28:21]    = 8'b00000000;  // rb_vga_out
+    assign mode1_oebs[20:18]    = 3'b111;       // Input: SPI1
+    assign mode1_oebs[17:15]    = 3'b111;       // Input: SPI2
+    assign mode1_oebs[14]       = 1'b0;         // rb_tex_csb
+    assign mode1_oebs[13]       = 1'b0;         // rb_tex_sclk
+    assign mode1_oebs[12]       = rb_tex_oeb0;  // Bidir
+    assign mode1_oebs[11:5]     = 7'b1111111;   // All inputs.
+    assign mode1_oebs[4:0]      = 5'b00000;     // count[4:0]
+
+    wire        rb_tex_csb;
+    wire        rb_tex_sclk;
+    wire        rb_tex_out0;
+    wire        rb_tex_oeb0;
+    wire        rb_i_debug_m    = (~la_oenb[68]) ? la_data_in[68] : 1'b0;
+    wire        rb_i_debug_t    = (~la_oenb[69]) ? la_data_in[69] : 1'b0;
+    wire        rb_i_vec_sclk   = (~la_oenb[70]) ? la_data_in[70] : io_in[20];
+    wire        rb_i_vec_mosi   = (~la_oenb[71]) ? la_data_in[71] : io_in[19];
+    wire        rb_i_vec_ss_n   = (~la_oenb[72]) ? la_data_in[72] : io_in[18];
+    wire        rb_i_reg_sclk   = (~la_oenb[73]) ? la_data_in[73] : io_in[17];
+    wire        rb_i_reg_mosi   = (~la_oenb[74]) ? la_data_in[74] : io_in[16];
+    wire        rb_i_reg_ss_n   = (~la_oenb[75]) ? la_data_in[75] : io_in[15];
+    wire        rb_i_inc_px     = (~la_oenb[76]) ? la_data_in[76] : io_in[9];
+    wire        rb_i_inc_py     = (~la_oenb[77]) ? la_data_in[77] : io_in[8];
+    wire        rb_i_gen_tex    = (~la_oenb[78]) ? la_data_in[78] : io_in[7];
+    wire        rb_i_reg        = (~la_oenb[79]) ? la_data_in[79] : io_in[6];
+    wire        rb_i_debug_v    = (~la_oenb[80]) ? la_data_in[80] : io_in[5];
+    wire [3:0]  rb_i_tex_in;
+    assign      rb_i_tex_in = {
+                                  1'b0,
+                                  (~la_oenb[81]) ? la_data_in[81] : io_in[12],
+                                  (~la_oenb[82]) ? la_data_in[82] : io_in[11],
+                                  (~la_oenb[83]) ? la_data_in[83] : io_in[10]
+                                };
 
     // LA
     assign la_data_out = {{(128-BITS){1'b0}}, count};
     // LA probes [63:32] are for controlling the count register  
     assign la_write = ~la_oenb[63:64-BITS] & ~{BITS{valid}};
     // LA probes [65:64] are for controlling the count clk & reset  
-    assign clk      = (~la_oenb[64]) ? la_data_in[64]: wb_clk_i;
-    assign rst      = (~la_oenb[65]) ? la_data_in[65]: wb_rst_i;
+    assign clk      = (~la_oenb[64]) ? la_data_in[64] : wb_clk_i;
+    assign rst      = (~la_oenb[65]) ? la_data_in[65] : wb_rst_i;
     // LA [66] can override digit_pol_in:
     wire digit_pol  = (~la_oenb[66]) ? la_data_in[66] : digit_pol_in;
     // LA [67] can override mode_in:
@@ -155,12 +205,66 @@ module user_proj_example #(
         .ready(wbs_ack_o),
         .valid(valid),
         .rdata(rdata),
-        .wdata(wbs_dat_i[BITS-1:0]),
+        .wdata(wdata),
         .wstrb(wstrb),
         .la_write(la_write),
         .la_input(la_data_in[63:64-BITS]),
         .count(count)
     );
+
+    wire [9:0] hpos;
+    wire [9:0] vpos;
+
+    rbzero rbzero(
+        .clk        (clk),
+        .reset      (rst),
+
+        // SPI peripheral interface for updating vectors:
+        .i_sclk     (rb_i_vec_sclk),
+        .i_mosi     (rb_i_vec_mosi),
+        .i_ss_n     (rb_i_vec_ss_n),
+
+        // SPI peripheral interface for everything else:
+        .i_reg_sclk (rb_i_reg_sclk),
+        .i_reg_mosi (rb_i_reg_mosi),
+        .i_reg_ss_n (rb_i_reg_ss_n),
+
+        // SPI controller interface for reading SPI flash memory (i.e. textures):
+        .o_tex_csb  (rb_tex_csb),
+        .o_tex_sclk (rb_tex_sclk),
+        .o_tex_out0 (rb_tex_out0),
+        .o_tex_oeb0 (rb_tex_oeb0), // Direction control for io[0] (WARNING: OEb, not OE).
+        .i_tex_in   (rb_i_tex_in), //NOTE: io[3] is unused, currently.
+        
+        // Debug/demo signals:
+        .i_debug_m  (rb_i_debug_m), // Map debug overlay
+        .i_debug_t  (rb_i_debug_t), // Trace debug overlay
+        .i_debug_v  (rb_i_debug_v), // Vectors debug overlay
+        .i_inc_px   (rb_i_inc_px),
+        .i_inc_py   (rb_i_inc_py),
+        .i_gen_tex  (rb_i_gen_tex), // 1=Use bitwise-generated textures instead of SPI texture memory.
+        // .o_vinf     (vinf),
+        // .o_hmax     (hmax),
+        // .o_vmax     (vmax),
+        // VGA outputs:
+        // .o_hblank   (uio_out[0]),
+        // .o_vblank   (uio_out[1]),
+        .hpos       (hpos),
+        .vpos       (vpos),
+        .hsync_n    (hsync_n), // Unregistered.
+        .vsync_n    (vsync_n), // Unregistered.
+        .rgb        (rgb)
+    );
+
+    wire  [5:0] rgb;
+    wire        vsync_n;
+    wire        hsync_n;
+    reg   [7:0] registered_vga_output;
+    wire  [7:0] unregistered_vga_output = {hsync_n, vsync_n, rgb};
+
+    always @(posedge clk) registered_vga_output <= unregistered_vga_output;
+
+    wire [7:0] rb_vga_out = rb_i_reg ? registered_vga_output : unregistered_vga_output;
 
 endmodule
 

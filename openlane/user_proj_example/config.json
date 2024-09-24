@@ -1,28 +1,43 @@
 {
-
-    "//RUN_KLAYOUT_DRC": 0,
-    "//RUN_KLAYOUT_XOR": 0,
-    "//RUN_MAGIC_DRC": 0,
+    "QUIT_ON_TIMING_VIOLATIONS": 1,
+    "RUN_KLAYOUT_DRC": 0,
+    "RUN_KLAYOUT_XOR": 0,
+    "RUN_MAGIC_DRC": 0,
     "ROUTING_CORES": 16,
 
     "DESIGN_NAME": "user_proj_example",
     "DESIGN_IS_CORE": 0,
+
     "VERILOG_FILES": [
         "dir::../../verilog/rtl/defines.v",
+        "dir::../../verilog/rtl/raybox-zero/src/rtl/fixed_point_params.v",
+        "dir::../../verilog/rtl/raybox-zero/src/rtl/helpers.v",
+        "dir::../../verilog/rtl/raybox-zero/src/rtl/rbzero.v",
+        "dir::../../verilog/rtl/raybox-zero/src/rtl/spi_registers.v",
+        "dir::../../verilog/rtl/raybox-zero/src/rtl/debug_overlay.v",
+        "dir::../../verilog/rtl/raybox-zero/src/rtl/map_overlay.v",
+        "dir::../../verilog/rtl/raybox-zero/src/rtl/map_rom.v",
+        "dir::../../verilog/rtl/raybox-zero/src/rtl/pov.v",
+        "dir::../../verilog/rtl/raybox-zero/src/rtl/lzc.v",
+        "dir::../../verilog/rtl/raybox-zero/src/rtl/reciprocal.v",
+        "dir::../../verilog/rtl/raybox-zero/src/rtl/wall_tracer.v",
+        "dir::../../verilog/rtl/raybox-zero/src/rtl/row_render.v",
+        "dir::../../verilog/rtl/raybox-zero/src/rtl/vga_mux.v",
+        "dir::../../verilog/rtl/raybox-zero/src/rtl/vga_sync.v",
+        "dir::../../verilog/rtl/raybox-zero/src/rtl/top_raybox_zero_fsm.v",
         "dir::../../verilog/rtl/user_proj_example.v"
     ],
-    "CLOCK_PERIOD": 20,
+    "CLOCK_PERIOD": 25,
     "CLOCK_PORT": "wb_clk_i",
     "CLOCK_NET": "user_proj_example.clk",
-
     "FP_SIZING": "absolute",
     "DIE_AREA": "0 0 2700 1600",
-    "FP_CORE_UTIL": 45,
-    "PL_TARGET_DENSITY": 0.55,
+    "FP_CORE_UTIL": 25,
+    "PL_TARGET_DENSITY": 0.35,
     "FP_PIN_ORDER_CFG": "dir::pin_order.cfg",
 
-    "PL_RESIZER_MAX_WIRE_LENGTH": 250,
-    "GLB_RESIZER_MAX_WIRE_LENGTH": 250,
+    "PL_RESIZER_MAX_WIRE_LENGTH": 100,
+    "GLB_RESIZER_MAX_WIRE_LENGTH": 100,
 
     "MAX_TRANSITION_CONSTRAINT": 1.0,
     "MAX_FANOUT_CONSTRAINT": 16,
