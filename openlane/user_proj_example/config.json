@@ -29,13 +29,13 @@
         "dir::../../verilog/rtl/raybox-zero/src/rtl/top_raybox_zero_fsm.v",
         "dir::../../verilog/rtl/user_proj_example.v"
     ],
-    "CLOCK_PERIOD": 25,
+    "CLOCK_PERIOD": 20,
     "CLOCK_PORT": "wb_clk_i",
     "CLOCK_NET": [ "user_proj_example.clk", "user_proj_example.rb_clk" ],
     "FP_SIZING": "absolute",
-    "DIE_AREA": "0 0 2700 2700",
-    "FP_CORE_UTIL": 25,
-    "PL_TARGET_DENSITY": 0.35,
+    "DIE_AREA": "0 0 2700 1500",
+    "FP_CORE_UTIL": 20,
+    "PL_TARGET_DENSITY": 0.30,
     "FP_PIN_ORDER_CFG": "dir::pin_order.cfg",
 
     "PL_RESIZER_MAX_WIRE_LENGTH": 100,

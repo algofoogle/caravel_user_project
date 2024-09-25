@@ -88,6 +88,7 @@ user_proj_example mprj (
 	.vssd1(vssd1),	// User area 1 digital ground
 `endif
 
+    .user_clock2    (user_clock2),
     .wb_clk_i       (wb_clk_i),
     .wb_rst_i       (wb_rst_i),
 

@@ -44,6 +44,7 @@ module user_proj_example #(
 `endif
 
     // Wishbone Slave ports (WB MI A)
+    input               user_clock2,    // Alternate clock.
     input               wb_clk_i,       // Core/Wishbone system clock.
     input               wb_rst_i,       // Core/Wishbone reset signal (active high).
     input               wbs_stb_i,
@@ -69,7 +70,7 @@ module user_proj_example #(
     output [2:0] irq
 );
     wire clk;
-    wire rb_clk = wb_clk_i; // Clock for raybox_zero module.
+    wire rb_clk = user_clock2; // Clock for raybox_zero module.
     wire rst;
 
     wire mode_in        = io_in[37];    // 0 = Binary output on out[37:22]; 1 = 4x 7seg hex output on out[37:10]
@@ -111,8 +112,17 @@ module user_proj_example #(
     assign irq[0] = (count == 0);
     // IRQ1: Count hit a value equal to upper bits of LA bank 2:
     assign irq[1] = (count == la_data_in[95:96-BITS]);
-    // IRQ2: Sensitive to changes on mode_in:
-    assign irq[2] = mode_in;
+    // IRQ2: End of rzbero's visible frame:
+    assign irq[2] = end_of_frame_sync[1];
+
+    wire end_of_frame = (vpos == 10'd479 && hpos == 10'd640);
+    reg [1:0] end_of_frame_sync;
+    always @(posedge wb_clk_i) begin
+        if (rst)
+            end_of_frame_sync <= 2'b00;
+        else
+            end_of_frame_sync <= {end_of_frame_sync[0], end_of_frame};
+    end
 
     // Logic below lets 'mode' select between two different sets of output
     // for all chip GPIOs 35 down to 0:
