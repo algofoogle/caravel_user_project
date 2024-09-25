@@ -1,8 +1,8 @@
 {
 
-    "//RUN_KLAYOUT_DRC": 0,
-    "//RUN_KLAYOUT_XOR": 0,
-    "//RUN_MAGIC_DRC": 0,
+    "RUN_KLAYOUT_DRC": 0,
+    "RUN_KLAYOUT_XOR": 0,
+    "RUN_MAGIC_DRC": 0,
     "ROUTING_CORES": 16,
 
     "DESIGN_NAME": "user_project_wrapper",

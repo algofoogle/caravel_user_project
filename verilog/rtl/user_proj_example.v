@@ -69,6 +69,7 @@ module user_proj_example #(
     output [2:0] irq
 );
     wire clk;
+    wire rb_clk = wb_clk_i; // Clock for raybox_zero module.
     wire rst;
 
     wire mode_in        = io_in[37];    // 0 = Binary output on out[37:22]; 1 = 4x 7seg hex output on out[37:10]
@@ -216,7 +217,7 @@ module user_proj_example #(
     wire [9:0] vpos;
 
     rbzero rbzero(
-        .clk        (clk),
+        .clk        (rb_clk),
         .reset      (rst),
 
         // SPI peripheral interface for updating vectors:

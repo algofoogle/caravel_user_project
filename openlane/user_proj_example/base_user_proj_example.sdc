@@ -66,7 +66,7 @@ set_multicycle_path -hold 1  -through [get_ports {wbs_stb_i}]
 # signal is just for debug with infrequent changes, I'm telling the analysis to only care
 # about the case where clk is full-speed
 # (i.e. where la_oenb[64] is 1, thus not overriding, thus la_data_in[64] should be don't-care):
-set_case_analysis 1 [get_ports {la_oenb[64]}]
+#set_case_analysis 1 [get_ports {la_oenb[64]}]
 # I first tried marking them as false paths to ignore them completely,
 # but the timing looked TOO good, so I gave up this approach:
 # set_false_path -hold -from [get_ports {la_data_in[64]}]
