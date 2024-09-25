@@ -1,6 +1,6 @@
 ###############################################################################
 # Created by write_sdc
-# Tue Sep 24 00:18:40 2024
+# Wed Sep 25 18:29:25 2024
 ###############################################################################
 current_design user_proj_example
 ###############################################################################
@@ -1970,7 +1970,6 @@ set_input_transition -min 0.0900 [get_ports {wbs_sel_i[1]}]
 set_input_transition -max 0.1800 [get_ports {wbs_sel_i[1]}]
 set_input_transition -min 0.0900 [get_ports {wbs_sel_i[0]}]
 set_input_transition -max 0.1800 [get_ports {wbs_sel_i[0]}]
-set_case_analysis 1 [get_ports {la_oenb[64]}]
 set_timing_derate -early 0.9500
 set_timing_derate -late 1.0500
 ###############################################################################
