@@ -24,22 +24,22 @@ Refer to [README](docs/source/index.md) for the standard Caravel User Project do
 
 ## Output mode selection
 
-`IN[36]` specifies what `mode` we are in, to determine how outputs behave. The following are common to both modes:
+`IN[37]` specifies what `mode` we are in, to determine how outputs behave. The following are common to both modes:
 
 | GPIO   | Dir | Function         |
 |-|-|-|
 | 35:29  | Out | `digit0`         |
-| 7:0    | Out | `count[7:0]`     |
+| 4:0    | Out | `count[4:0]`     |
 
-NOTE: This `mode` input on GPIO 36 can be overridden by `LA[67]`.
+NOTE: This `mode` input on GPIO 37 can be overridden by `LA[67]`.
 
 
 ### Mode 0 outputs: full counter, 1 hex digit (7seg), some debug signals
 
 | GPIO   | Dir | Function               |
 |-|-|-|
-| 37     | In  | `digit_pol`            |
-| 36     | In  | `mode`==0              |
+| 37     | In  | `mode`==0              |
+| 36     | In  | `digit_pol`            |
 | 35:29  | Out | `digit0`               |
 | 28:25  | Out | `la_oenb[67:64]`       |
 | 24:21  | Out | `la_data_out[67:64]`   |
@@ -50,39 +50,30 @@ NOTE: This `mode` input on GPIO 36 can be overridden by `LA[67]`.
 | 16     | Out | Any `wstrb` high?      |
 | 15:0   | Out | `count[15:0]`          |
 
-### Mode 1 outputs: 8 LSB of counter, 4 hex digits (7seg)
+### Mode 1 outputs: 5 LSB of counter, 1 hex digit (7seg), raybox-zero VGA output
 
 | GPIO   | Dir | Function               |
 |-|-|-|
-| 37     | In  | `digit_pol`            |
-| 36     | In  | `mode`==1              |
+| 37     | In  | `mode`==0              |
+| 36     | In  | `digit_pol`            |
 | 35:29  | Out | `digit0`               |
-| 28:22  | Out | `digit1`               |
-| 21:15  | Out | `digit2`               |
-| 14:8   | Out | `digit3`               |
-| 7:0    | Out | `count[7:0]`           |
-
-
-### Mode 0: Counter 4x 7seg
-
-*   37: mode==0
-*   36: pol
-*   35:29: digit0
-*   28:0: ...etc...
-
-### Mode 1: raybox-zero
-
-*   37: mode==1
-*   36: pol
-*   35:29: digit0
-*   28:21: VGA outs
-*   20:18: SPI1
-*   17:15: SPI2
-*   14:10: tex SPI
-*   9: inc_px
-*   8: inc_py
-*   7: gen_tex
-*   6: reg
-*   5: debug
-*   4:0: counter[4:0] (or HKSPI)
-
+| 28     | Out | `hsync_n`              |
+| 27     | Out | `vsync_n`              |
+| 26:21  | Out | RrGgBb                 |
+| 20     | Out | SPI1 `vec_sclk`        |
+| 19     | Out | SPI1 `vec_mosi`        |
+| 18     | Out | SPI1 `vec_csb`         |
+| 17     | Out | SPI2 `reg_sclk`        |
+| 16     | Out | SPI2 `reg_mosi`        |
+| 15     | Out | SPI2 `reg_csb`         |
+| 14     | Out | `tex_csb`              |
+| 13     | Out | `gen_tex`              |
+| 12     | Out | `tex_io0`              |
+| 11     | Out | `tex_io1`              |
+| 10     | Out | `tex_io2`              |
+| 9      | Out | `inc_px`               |
+| 8      | Out | `inc_py`               |
+| 7      | Out | `tex_sclk`             |
+| 6      | Out | `reg`                  |
+| 5      | Out | `debug`                |
+| 4:0    | Out | `count[4:0]`           |

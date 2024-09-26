@@ -111,8 +111,8 @@ module user_proj_example #(
     assign irq[0] = (count == 0);
     // IRQ1: Count hit a value equal to upper bits of LA bank 2:
     assign irq[1] = (count == la_data_in[95:96-BITS]);
-    // IRQ2: Sensitive to changes on mode_in:
-    assign irq[2] = mode_in;
+    // IRQ2: End of visible frame:
+    assign irq[2] = (hpos == 10'd640 && vpos == 10'd480);
 
     // Logic below lets 'mode' select between two different sets of output
     // for all chip GPIOs 35 down to 0:
@@ -139,13 +139,13 @@ module user_proj_example #(
     assign mode1_outs[20:18]    = 3'b000;       // Input: SPI1
     assign mode1_outs[17:15]    = 3'b000;       // Input: SPI2
     assign mode1_outs[14]       = rb_tex_csb;
-    assign mode1_outs[13]       = rb_tex_sclk;
-    assign mode1_outs[12]       = rb_tex_out0;  // Bidir: tex_io0
+    assign mode1_outs[13]       = 1'b0;         // Input: gen_tex
+    assign mode1_outs[12]       = rb_tex_out0;  // BIDIR: tex_io0
     assign mode1_outs[11]       = 1'b0;         // Input: tex_io1
     assign mode1_outs[10]       = 1'b0;         // Input: tex_io2
     assign mode1_outs[9]        = 1'b0;         // Input: inc_px
     assign mode1_outs[8]        = 1'b0;         // Input: inc_py
-    assign mode1_outs[7]        = 1'b0;         // Input: gen_tex
+    assign mode1_outs[7]        = rb_tex_sclk;  // Note: Lower index because more time-sensitive
     assign mode1_outs[6]        = 1'b0;         // Input: reg
     assign mode1_outs[5]        = 1'b0;         // Input: debug
     assign mode1_outs[4:0]      = count[4:0];
@@ -153,38 +153,48 @@ module user_proj_example #(
     wire [35:0] mode1_oebs;
     assign mode1_oebs[35:29]    = 7'b0000000;   // digit0
     assign mode1_oebs[28:21]    = 8'b00000000;  // rb_vga_out
-    assign mode1_oebs[20:18]    = 3'b111;       // Input: SPI1
-    assign mode1_oebs[17:15]    = 3'b111;       // Input: SPI2
+    assign mode1_oebs[20:18]    = 3'b111;       // INPUT: SPI1
+    assign mode1_oebs[17:15]    = 3'b111;       // INPUT: SPI2
     assign mode1_oebs[14]       = 1'b0;         // rb_tex_csb
-    assign mode1_oebs[13]       = 1'b0;         // rb_tex_sclk
-    assign mode1_oebs[12]       = rb_tex_oeb0;  // Bidir
-    assign mode1_oebs[11:5]     = 7'b1111111;   // All inputs.
+    assign mode1_oebs[13]       = 1'b1;         // INPUT: gen_tex
+    assign mode1_oebs[12]       = rb_tex_oeb0;  // BIDIR: tex_io0
+    assign mode1_oebs[11]       = 1'b1;         // INPUT: tex_io1
+    assign mode1_oebs[10]       = 1'b1;         // INPUT: tex_io2
+    assign mode1_oebs[9]        = 1'b1;         // INPUT: inc_px
+    assign mode1_oebs[8]        = 1'b1;         // INPUT: inc_py
+    assign mode1_oebs[7]        = 1'b0;         // rb_tex_sclk
+    assign mode1_oebs[6]        = 1'b0;         // INPUT: reg
+    assign mode1_oebs[5]        = 1'b0;         // INPUT: debug
     assign mode1_oebs[4:0]      = 5'b00000;     // count[4:0]
 
     wire        rb_tex_csb;
     wire        rb_tex_sclk;
     wire        rb_tex_out0;
     wire        rb_tex_oeb0;
-    wire        rb_i_debug_m    = (~la_oenb[68]) ? la_data_in[68] : 1'b0;
-    wire        rb_i_debug_t    = (~la_oenb[69]) ? la_data_in[69] : 1'b0;
-    wire        rb_i_vec_sclk   = (~la_oenb[70]) ? la_data_in[70] : io_in[20];
-    wire        rb_i_vec_mosi   = (~la_oenb[71]) ? la_data_in[71] : io_in[19];
-    wire        rb_i_vec_ss_n   = (~la_oenb[72]) ? la_data_in[72] : io_in[18];
-    wire        rb_i_reg_sclk   = (~la_oenb[73]) ? la_data_in[73] : io_in[17];
-    wire        rb_i_reg_mosi   = (~la_oenb[74]) ? la_data_in[74] : io_in[16];
-    wire        rb_i_reg_ss_n   = (~la_oenb[75]) ? la_data_in[75] : io_in[15];
-    wire        rb_i_inc_px     = (~la_oenb[76]) ? la_data_in[76] : io_in[9];
-    wire        rb_i_inc_py     = (~la_oenb[77]) ? la_data_in[77] : io_in[8];
-    wire        rb_i_gen_tex    = (~la_oenb[78]) ? la_data_in[78] : io_in[7];
-    wire        rb_i_reg        = (~la_oenb[79]) ? la_data_in[79] : io_in[6];
-    wire        rb_i_debug_v    = (~la_oenb[80]) ? la_data_in[80] : io_in[5];
-    wire [3:0]  rb_i_tex_in;
-    assign      rb_i_tex_in = {
-                                  1'b0,
-                                  (~la_oenb[81]) ? la_data_in[81] : io_in[12],
-                                  (~la_oenb[82]) ? la_data_in[82] : io_in[11],
-                                  (~la_oenb[83]) ? la_data_in[83] : io_in[10]
-                                };
+    // These inputs have internal synchronisers to avoid metastability:
+    wire        rb_i_vec_sclk   = (~la_oenb[68]) ? la_data_in[68] : io_in[20];
+    wire        rb_i_vec_mosi   = (~la_oenb[69]) ? la_data_in[69] : io_in[19];
+    wire        rb_i_vec_ss_n   = (~la_oenb[70]) ? la_data_in[70] : io_in[18];
+    wire        rb_i_reg_sclk   = (~la_oenb[71]) ? la_data_in[71] : io_in[17];
+    wire        rb_i_reg_mosi   = (~la_oenb[72]) ? la_data_in[72] : io_in[16];
+    wire        rb_i_reg_ss_n   = (~la_oenb[73]) ? la_data_in[73] : io_in[15];
+    // The following LAs don't need synchronisation, because they operate on a human timescale
+    // (i.e. just muxing output effects, that can afford to be 'broken' for a few cycles):
+    wire        rb_i_inc_px     = (~la_oenb[74]) ? la_data_in[74] : io_in[9];
+    wire        rb_i_inc_py     = (~la_oenb[75]) ? la_data_in[75] : io_in[8];
+    wire        rb_i_gen_tex    = (~la_oenb[76]) ? la_data_in[76] : io_in[13];
+    wire        rb_i_reg        = (~la_oenb[77]) ? la_data_in[77] : io_in[6];
+    wire        rb_i_debug_v    = (~la_oenb[78]) ? la_data_in[78] : io_in[5]; // Vectors debug.
+    wire        rb_i_debug_m    = (~la_oenb[79]) ? la_data_in[79] : 1'b0;     // Map debug.
+    wire        rb_i_debug_t    = (~la_oenb[80]) ? la_data_in[80] : 1'b0;   // Trace debug.
+    // These inputs are assumed to already be synchronous:
+    wire [3:0]  rb_i_tex_in     = { 1'b0, io_in[12:10] };
+                                // {
+                                //   1'b0,
+                                //   (~la_oenb[81]) ? la_data_in[81] : io_in[12],
+                                //   (~la_oenb[82]) ? la_data_in[82] : io_in[11],
+                                //   (~la_oenb[83]) ? la_data_in[83] : io_in[10]
+                                // };
 
     // LA
     assign la_data_out = {{(128-BITS){1'b0}}, count};
